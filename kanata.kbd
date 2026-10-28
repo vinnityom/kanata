@@ -1,0 +1,82 @@
+(defcfg
+  process-unmapped-keys yes
+  macos-dev-names-include ("Apple Internal Keyboard / Trackpad"))
+
+(defsrc
+  8
+  caps lctl s d g h j k l rmet
+  y u i o p [ ; '
+  n m , . /
+  a c v
+  fn f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12)
+
+(defhands
+  (left  q w e r t a s d f g z x c v b)
+  (right 8 y u i o p h j k l ; ' n m , . /))
+
+(defalias
+  hyp (multi lctl lalt lsft lmet)
+  g   (tap-hold-release 200 200 g @hyp)
+  h   (tap-hold-release 200 200 h @hyp)
+
+  ;; TODO(2026-10-09): require-prior-idle removed from s/l/d as an experiment (was 150ms;
+  ;; caused missed Shift/symbols in fast typing). If misfires inside words appear,
+  ;; restore a smaller value (~80-100ms) on the three lines marked PRIOR-IDLE.
+  ;; s/l: hold = Shift
+  s   (tap-hold-release 200 200 s lsft) ;; PRIOR-IDLE
+  l   (tap-hold-release 200 200 l rsft) ;; PRIOR-IDLE
+
+  ;; d: hold = symbol layer, only triggered by right-hand keys
+  d   (tap-hold-opposite-hand-release 200 d (layer-while-held sym)
+        (timeout hold)) ;; PRIOR-IDLE
+
+  ;; physical Caps = Ctrl; while held, h/j/k/l become arrows and [ becomes Esc (Ctrl itself is lifted)
+  ctl (multi lctl (layer-while-held nav))
+  lf  (unmod (lctl) left)
+  dn  (unmod (lctl) down)
+  up  (unmod (lctl) up)
+  rt  (unmod (lctl) rght)
+  esc (unmod (lctl) esc)
+
+  ;; long hold (250ms) of c/v/a alone = Cmd+C/V/A, sent once (no autorepeat)
+  a   (tap-hold 200 250 a (macro M-a) (require-prior-idle 150))
+  c   (tap-hold 200 250 c (macro M-c) (require-prior-idle 150))
+  v   (tap-hold 200 250 v (macro M-v) (require-prior-idle 150))
+
+  ;; top row: actions by default, real F-keys while Fn is held (Fn itself still passes through)
+  fn  (multi fn (layer-while-held fkeys))
+
+  ;; right Cmd: tap = F10, hold = Cmd
+  cmd (tap-hold-release 200 200 f10 rmet))
+
+(deflayer base
+  8
+  @ctl caps @s @d @g @h  j   k   @l  @cmd
+  y    u    i  o  p  [   ;   '
+  n    m    ,  .  /
+  @a   @c   @v
+  @fn  brdn brup mctl sls dtn dnd prev pp next mute vold volu)
+
+(deflayer nav
+  _
+  _    _    _  _  _  @lf @dn @up @rt _
+  _    _    _  _  _  @esc _   _
+  _    _    _  _  _
+  a    c    v
+  _    _    _    _    _   _   _   _    _  _    _    _    _)
+
+(deflayer sym
+  S-8
+  _    _    _  _  _  S-= S-9 S-0 -   _
+  bspc [    ]  S-4 S-7 _ = S-'
+  S-, S-[ S-] S-. \
+  _   _   _
+  _    _    _    _    _   _   _   _    _  _    _    _    _)
+
+(deflayer fkeys
+  _
+  _    _    _  _  _  _   _   _   _   _
+  _    _    _  _  _  _   _   _
+  _    _    _  _  _
+  _    _    _
+  _    f1   f2   f3   f4  f5  f6  f7   f8 f9   f10  f11  f12)
